@@ -1,0 +1,10 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: ovsdbutil-injector-webhook-configmap
+data:
+  sidecarconfig.yaml: |
+    containers:
+      - name: sidecar-ovsdb
+        image: gopinatht/cord-ovsdb-sidecar:latest
+        imagePullPolicy: IfNotPresent
