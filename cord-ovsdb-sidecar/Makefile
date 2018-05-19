@@ -2,7 +2,7 @@ appname = cord-ovsdb-sidecar
 app_output = ./$(appname)
 docker_repo = gopinatht
 docker_tag = latest
-application_directory = ./src
+application_directory = .
 docker_directory = .
 
 all: push

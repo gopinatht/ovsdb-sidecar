@@ -16,7 +16,6 @@ import (
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
 	"k8s.io/apimachinery/pkg/runtime"
 	"k8s.io/apimachinery/pkg/runtime/serializer"
-	"k8s.io/kubernetes/pkg/apis/core/v1"
 )
 
 var (
@@ -34,8 +33,8 @@ var ignoredNamespaces = []string{
 }
 
 const (
-	admissionWebhookAnnotationInjectKey = "sidecar-injector-webhook.morven.me/inject"
-	admissionWebhookAnnotationStatusKey = "sidecar-injector-webhook.morven.me/status"
+	admissionWebhookAnnotationInjectKey = "sidecar-injector-webhook.onf.org/inject"
+	admissionWebhookAnnotationStatusKey = "sidecar-injector-webhook.onf.org/status"
 )
 
 type WebhookServer struct {
@@ -67,7 +66,7 @@ func init() {
 	_ = admissionregistrationv1beta1.AddToScheme(runtimeScheme)
 	// defaulting with webhooks:
 	// https://github.com/kubernetes/kubernetes/issues/57982
-	_ = v1.AddToScheme(runtimeScheme)
+	//_ = v1.AddToScheme(runtimeScheme) // GOPI - MIGHT NEED TO COME BACK TO THIS IF THINGS FAIL
 }
 
 // (https://github.com/kubernetes/kubernetes/issues/57982)
