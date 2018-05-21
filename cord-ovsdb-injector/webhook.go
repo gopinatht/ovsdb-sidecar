@@ -96,6 +96,14 @@ func loadConfig(configFile string) (*Config, error) {
 
 // Check whether the target resoured need to be mutated
 func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
+
+	// If it is not the OpenVSwitch DB pod, skip the mutation
+	generateName := "openvswitch-db"
+	if !strings.Contains(metadata.GetGenerateName(), generateName) {
+		glog.Infof("Skip mutation for pods that are not openvswitch-db pods")
+		return false
+	}
+
 	// skip special kubernete system namespaces
 	for _, namespace := range ignoredList {
 		if metadata.Namespace == namespace {
@@ -109,7 +117,17 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 		annotations = map[string]string{}
 	}
 
+	// The OpenVSwitchDB pod does not have the Srarus annotation, so add it.
+	if _, ok := annotations[admissionWebhookAnnotationStatusKey]; !ok {
+		annotations[admissionWebhookAnnotationStatusKey] = "not-injected"
+	}
+
 	status := annotations[admissionWebhookAnnotationStatusKey]
+
+	// The OpenVSwitchDB pod does not have the Inject annotation, so add it.
+	if _, ok := annotations[admissionWebhookAnnotationInjectKey]; !ok {
+		annotations[admissionWebhookAnnotationInjectKey] = "yes"
+	}
 
 	// determine whether to perform mutation based on annotation for the target resource
 	var required bool
