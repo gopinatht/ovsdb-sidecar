@@ -1,4 +1,4 @@
-# ovsdb-sidecar
+# OVSDB Mutating webhook
 To get it working:
 - Bring Kubernetes Up. Make sure kubectl and helm client work.
 - Make sure the nodes in Kubernetes have the label 'openvswitch=enabled'
