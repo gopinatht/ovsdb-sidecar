@@ -231,12 +231,12 @@ func createPatch(pod *corev1.Pod, sidecarConfig *Config, annotations map[string]
 
 	containersCopy := append([]corev1.Container(nil), pod.Spec.Containers...)
 
-	containersCopy[0].Command = append(containersCopy[0].Command, ";")
-	containersCopy[0].Command = append(containersCopy[0].Command, "ovs-appctl")
-	containersCopy[0].Command = append(containersCopy[0].Command, "-t")
-	containersCopy[0].Command = append(containersCopy[0].Command, "ovsdb-server")
-	containersCopy[0].Command = append(containersCopy[0].Command, "ovsdb-server/add-remote")
-	containersCopy[0].Command = append(containersCopy[0].Command, "ptcp:6641")
+	// Replace the existing command array with your own so we can expose a passive TCP port
+	bashSlice := []string{"bash", "-c"}
+	s := "sed 's/--remote=db:Open_vSwitch,Open_vSwitch,manager_options/--remote=db:Open_vSwitch,Open_vSwitch,manager_options --remote=ptcp:6641/' /tmp/openvswitch-db-server.sh > /openvswitch-db-server.sh; chmod +x /openvswitch-db-server.sh; /openvswitch-db-server.sh start;"
+	bashSlice = append(bashSlice, s)
+	containersCopy[0].Command = bashSlice
+
 	patch = ModifyContainers(containersCopy)
 	//patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
 	patch = append(patch, addVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
