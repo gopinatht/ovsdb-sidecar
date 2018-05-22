@@ -13,8 +13,8 @@ spec:
     spec:
       containers:
         - name: ovsdbutil-injector
-          image: gopinatht/cord-ovsdb-injector:v1
-          imagePullPolicy: IfNotPresent
+          image: gopinatht/cord-ovsdb-injector:latest
+          imagePullPolicy: Always
           args:
             - -sidecarCfgFile=/etc/webhook/config/sidecarconfig.yaml
             - -tlsCertFile=/etc/webhook/certs/cert.pem
@@ -31,7 +31,7 @@ spec:
       volumes:
         - name: webhook-certs
           secret:
-            secretName: ovsdb-injector-webhook-certs
+            secretName: ovsdbutil-injector-webhook-certs
         - name: webhook-config
           configMap:
             name: ovsdbutil-injector-webhook-configmap

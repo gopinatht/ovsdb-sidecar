@@ -1,12 +1,12 @@
 apiVersion: v1
 kind: Service
 metadata:
-  name: ovsdb-injector-webhook-svc
+  name: ovsdbutil-injector-webhook-svc
   labels:
-    app: ovsdb-injector
+    app: ovsdbutil-injector
 spec:
   ports:
   - port: 443
     targetPort: 443
   selector:
-    app: ovsdb-injector
+    app: ovsdbutil-injector

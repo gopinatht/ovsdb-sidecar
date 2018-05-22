@@ -1,14 +1,14 @@
 apiVersion: admissionregistration.k8s.io/v1beta1
 kind: MutatingWebhookConfiguration
 metadata:
-  name: ovsdb-injector-webhook-cfg
+  name: ovsdbutil-injector-webhook-cfg
   labels:
-    app: ovsdb-injector
+    app: ovsdbutil-injector
 webhooks:
-  - name: ovsdb-injector.gopinatht.me
+  - name: ovsdbutil-injector.onf.org
     clientConfig:
       service:
-        name: ovsdb-injector-webhook-svc
+        name: ovsdbutil-injector-webhook-svc
         namespace: default
         path: "/mutate"
       caBundle: ${CA_BUNDLE}

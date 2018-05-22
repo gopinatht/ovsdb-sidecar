@@ -118,15 +118,20 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	}
 
 	// The OpenVSwitchDB pod does not have the Srarus annotation, so add it.
+	var status string
 	if _, ok := annotations[admissionWebhookAnnotationStatusKey]; !ok {
-		annotations[admissionWebhookAnnotationStatusKey] = "not-injected"
+		status = "not-injected"
+	} else {
+		status = annotations[admissionWebhookAnnotationStatusKey]
 	}
 
-	status := annotations[admissionWebhookAnnotationStatusKey]
+	var isInjected string
 
 	// The OpenVSwitchDB pod does not have the Inject annotation, so add it.
 	if _, ok := annotations[admissionWebhookAnnotationInjectKey]; !ok {
-		annotations[admissionWebhookAnnotationInjectKey] = "yes"
+		isInjected = "true"
+	} else {
+		isInjected = annotations[admissionWebhookAnnotationInjectKey]
 	}
 
 	// determine whether to perform mutation based on annotation for the target resource
@@ -134,7 +139,7 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 	if strings.ToLower(status) == "injected" {
 		required = false
 	} else {
-		switch strings.ToLower(annotations[admissionWebhookAnnotationInjectKey]) {
+		switch isInjected {
 		default:
 			required = false
 		case "y", "yes", "true", "on":
@@ -144,6 +149,15 @@ func mutationRequired(ignoredList []string, metadata *metav1.ObjectMeta) bool {
 
 	glog.Infof("Mutation policy for %v/%v: status: %q required:%v", metadata.Namespace, metadata.Name, status, required)
 	return required
+}
+
+func ModifyContainers(added []corev1.Container) (patch []patchOperation) {
+	patch = append(patch, patchOperation{
+		Op:    "replace",
+		Path:  "/spec/containers",
+		Value: added,
+	})
+	return patch
 }
 
 func addContainer(target, added []corev1.Container, basePath string) (patch []patchOperation) {
@@ -190,6 +204,7 @@ func addVolume(target, added []corev1.Volume, basePath string) (patch []patchOpe
 
 func updateAnnotation(target map[string]string, added map[string]string) (patch []patchOperation) {
 	for key, value := range added {
+		glog.Infof("Target-Key, Value: %v %v\n", key, target[key])
 		if target == nil || target[key] == "" {
 			target = map[string]string{}
 			patch = append(patch, patchOperation{
@@ -214,7 +229,16 @@ func updateAnnotation(target map[string]string, added map[string]string) (patch 
 func createPatch(pod *corev1.Pod, sidecarConfig *Config, annotations map[string]string) ([]byte, error) {
 	var patch []patchOperation
 
-	patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
+	containersCopy := append([]corev1.Container(nil), pod.Spec.Containers...)
+
+	containersCopy[0].Command = append(containersCopy[0].Command, ";")
+	containersCopy[0].Command = append(containersCopy[0].Command, "ovs-appctl")
+	containersCopy[0].Command = append(containersCopy[0].Command, "-t")
+	containersCopy[0].Command = append(containersCopy[0].Command, "ovsdb-server")
+	containersCopy[0].Command = append(containersCopy[0].Command, "ovsdb-server/add-remote")
+	containersCopy[0].Command = append(containersCopy[0].Command, "ptcp:6641")
+	patch = ModifyContainers(containersCopy)
+	//patch = append(patch, addContainer(pod.Spec.Containers, sidecarConfig.Containers, "/spec/containers")...)
 	patch = append(patch, addVolume(pod.Spec.Volumes, sidecarConfig.Volumes, "/spec/volumes")...)
 	patch = append(patch, updateAnnotation(pod.Annotations, annotations)...)
 

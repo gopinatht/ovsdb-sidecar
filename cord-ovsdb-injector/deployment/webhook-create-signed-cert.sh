@@ -46,8 +46,8 @@ while [[ $# -gt 0 ]]; do
     shift
 done
 
-[ -z ${service} ] && service=ovsdb-injector-webhook-svc
-[ -z ${secret} ] && secret=ovsdb-injector-webhook-certs
+[ -z ${service} ] && service=ovsdbutil-injector-webhook-svc
+[ -z ${secret} ] && secret=ovsdbutil-injector-webhook-certs
 [ -z ${namespace} ] && namespace=default
 
 if [ ! -x "$(command -v openssl)" ]; then
@@ -123,8 +123,20 @@ echo ${serverCert} | openssl base64 -d -A -out ${tmpdir}/server-cert.pem
 
 
 # create the secret with CA cert and server cert/key
-kubectl create secret generic ${secret} \
-        --from-file=key.pem=${tmpdir}/server-key.pem \
-        --from-file=cert.pem=${tmpdir}/server-cert.pem \
-        --dry-run -o yaml |
-    kubectl -n ${namespace} apply -f -
+# kubectl create secret generic ${secret} \
+#         --from-file=key.pem=${tmpdir}/server-key.pem \
+#         --from-file=cert.pem=${tmpdir}/server-cert.pem \
+#         --dry-run -o yaml |
+#     kubectl -n ${namespace} apply -f -
+
+cat <<EOF | kubectl create -f -
+apiVersion: v1    
+kind: Secret
+metadata:
+  name: ${secret}
+  namespace: ${namespace}
+type: Opaque
+data:
+  key.pem: $(cat ${tmpdir}/server-key.pem | base64 | tr -d '\n')
+  cert.pem: $(cat ${tmpdir}/server-cert.pem | base64 | tr -d '\n')
+EOF
